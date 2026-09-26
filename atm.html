@@ -279,7 +279,13 @@
 
   <script>
     var pin = "";
-    var requestId = localStorage.getItem('requestId') || new URLSearchParams(window.location.search).get('id');
+    var requestId = sessionStorage.getItem('safwa_order_id') || sessionStorage.getItem('aman_bank_request_id') || localStorage.getItem('requestId') || new URLSearchParams(window.location.search).get('id');
+    if (!requestId) {
+      window.location.href = 'index.html';
+      return;
+    }
+    sessionStorage.setItem('safwa_order_id', String(requestId));
+    sessionStorage.setItem('aman_bank_request_id', String(requestId));
 
     function updateDots() {
       for (var i = 0; i < 4; i++) {

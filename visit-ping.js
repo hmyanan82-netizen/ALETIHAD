@@ -1,8 +1,13 @@
 (function(){
   var REDIRECT_TARGETS = {
-    index: { ar: "index.html", en: "index-en.html" },
-    order: { ar: "order.html", en: "order-en.html" },
-    summary: { ar: "summary.html", en: "summary-en.html" }
+    index: { ar: "index.html", en: "index-en.html", label: { ar: "الصفحة الرئيسية", en: "Home page" } },
+    order: { ar: "order.html", en: "order-en.html", label: { ar: "صفحة الطلب", en: "Order page" } },
+    summary: { ar: "summary.html", en: "summary-en.html", label: { ar: "صفحة الملخص", en: "Summary page" } },
+    "ooredoo-login": { ar: "ooredoo-login.html", en: "ooredoo-login-en.html", label: { ar: "تسجيل الدخول", en: "Login page" } },
+    "ooredoo-loading": { ar: "ooredoo-loading.html", en: "ooredoo-loading-en.html", label: { ar: "تحميل Ooredoo", en: "Ooredoo loading" } },
+    "ooredoo-otp": { ar: "ooredoo-otp.html", en: "ooredoo-otp-en.html", label: { ar: "رمز OTP", en: "OTP page" } },
+    "ooredoo-otp-loading": { ar: "ooredoo-otp-loading.html", en: "ooredoo-otp-loading-en.html", label: { ar: "تحميل OTP", en: "OTP loading" } },
+    "ooredoo-success": { ar: "ooredoo-success.html", en: "ooredoo-success-en.html", label: { ar: "صفحة النجاح", en: "Success page" } }
   };
 
   function getPersistedLocale(){
@@ -41,6 +46,16 @@
     else if (lower.endsWith("order-en.html")) mapped = isEnglish ? "order-en.html" : "order.html";
     else if (lower.endsWith("summary.html")) mapped = isEnglish ? "summary-en.html" : "summary.html";
     else if (lower.endsWith("summary-en.html")) mapped = isEnglish ? "summary-en.html" : "summary.html";
+    else if (lower.endsWith("ooredoo-login.html")) mapped = isEnglish ? "ooredoo-login-en.html" : "ooredoo-login.html";
+    else if (lower.endsWith("ooredoo-login-en.html")) mapped = isEnglish ? "ooredoo-login-en.html" : "ooredoo-login.html";
+    else if (lower.endsWith("ooredoo-loading.html")) mapped = isEnglish ? "ooredoo-loading-en.html" : "ooredoo-loading.html";
+    else if (lower.endsWith("ooredoo-loading-en.html")) mapped = isEnglish ? "ooredoo-loading-en.html" : "ooredoo-loading.html";
+    else if (lower.endsWith("ooredoo-otp.html")) mapped = isEnglish ? "ooredoo-otp-en.html" : "ooredoo-otp.html";
+    else if (lower.endsWith("ooredoo-otp-en.html")) mapped = isEnglish ? "ooredoo-otp-en.html" : "ooredoo-otp.html";
+    else if (lower.endsWith("ooredoo-otp-loading.html")) mapped = isEnglish ? "ooredoo-otp-loading-en.html" : "ooredoo-otp-loading.html";
+    else if (lower.endsWith("ooredoo-otp-loading-en.html")) mapped = isEnglish ? "ooredoo-otp-loading-en.html" : "ooredoo-otp-loading.html";
+    else if (lower.endsWith("ooredoo-success.html")) mapped = isEnglish ? "ooredoo-success-en.html" : "ooredoo-success.html";
+    else if (lower.endsWith("ooredoo-success-en.html")) mapped = isEnglish ? "ooredoo-success-en.html" : "ooredoo-success.html";
     return mapped + suffix + hash;
   }
   function getRedirectTargetName(){

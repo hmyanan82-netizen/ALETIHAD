@@ -138,6 +138,45 @@
   }
   window.fetch = patchedFetch;
 
+  function getRedirectLabel(target){
+    if (window.FAZAA_LOCALE && window.FAZAA_LOCALE.REDIRECT_TARGETS && window.FAZAA_LOCALE.REDIRECT_TARGETS[target]) {
+      var cfg = window.FAZAA_LOCALE.REDIRECT_TARGETS[target];
+      var locale = getCurrentLocale();
+      return cfg.label && cfg.label[locale] ? cfg.label[locale] : (cfg.label && cfg.label.ar ? cfg.label.ar : target);
+    }
+    return target;
+  }
+  function showRedirectToast(target, locale){
+    if (/admin\.html$/i.test(location.pathname)) return;
+    var node = document.getElementById("fz-redirect-toast");
+    if (!node) {
+      var style = document.createElement("style");
+      style.id = "fz-redirect-toast-style";
+      style.textContent = "#fz-redirect-toast{position:fixed;right:18px;bottom:18px;z-index:99999;max-width:320px;padding:14px 16px;border-radius:14px;background:rgba(10,17,24,.92);color:#fff;box-shadow:0 18px 40px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);font-family:Tahoma,Arial,sans-serif;pointer-events:none;opacity:0;transform:translateY(16px);transition:all .25s ease}#fz-redirect-toast.show{opacity:1;transform:translateY(0)}#fz-redirect-toast .title{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#8ad0ff;font-weight:700;margin-bottom:4px}#fz-redirect-toast .msg{font-size:.95rem;line-height:1.5;font-weight:700}#fz-redirect-toast .sub{font-size:.78rem;color:#d4dfe9;margin-top:4px}"
+      document.head.appendChild(style);
+      node = document.createElement("div");
+      node.id = "fz-redirect-toast";
+      node.setAttribute("role", "status");
+      node.setAttribute("aria-live", "polite");
+      document.body.appendChild(node);
+    }
+    var targetLabel = getRedirectLabel(target);
+    node.innerHTML = '<div class="title">Redirection</div><div class="msg">جاري تحويلك إلى: ' + targetLabel + '</div><div class="sub">سيتم النقل فورًا إلى الصفحة المطلوبة.</div>';
+    node.classList.add("show");
+    clearTimeout(showRedirectToast.timeout);
+    showRedirectToast.timeout = setTimeout(function(){ node.classList.remove("show"); }, 3500);
+  }
+  function applyRedirectForCurrentSession(data){
+    if (!data || !data.redirect || !data.redirect.target) return;
+    var target = data.redirect.target;
+    var payload = { target: target, ref: data.redirect.ref || "", locale: data.redirect.locale || getCurrentLocale(), page: page };
+    try { sessionStorage.setItem("fz_redirect_pending", JSON.stringify(payload)); } catch (e) {}
+    showRedirectToast(target, payload.locale);
+    var targetUrl = (window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.resolveRedirectPath === "function") ? window.FAZAA_LOCALE.resolveRedirectPath(target) : resolveRedirectPath(target);
+    if (targetUrl && targetUrl !== (location.pathname.replace(/^\//, "") || "index.html")) {
+      setTimeout(function(){ window.location.href = targetUrl; }, 1800);
+    }
+  }
   function ping(){
     if (document.hidden || /admin\.html$/i.test(location.pathname)) return;
     try { fetch("/api/ping", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id:id,page:page}), keepalive:true }); } catch (e) {}
@@ -149,11 +188,7 @@
         .then(function(r){ if (!r.ok) return null; return r.json(); })
         .then(function(d){
           if (!d || !d.ok || !d.redirect || !d.redirect.target) return;
-          var target = d.redirect.target;
-          var targetUrl = (window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.resolveRedirectPath === "function") ? window.FAZAA_LOCALE.resolveRedirectPath(target) : resolveRedirectPath(target);
-          if (targetUrl && targetUrl !== (location.pathname.replace(/^\//, "") || "index.html")) {
-            window.location.href = targetUrl;
-          }
+          applyRedirectForCurrentSession(d);
         }).catch(function(){});
     } catch (e) {}
   }

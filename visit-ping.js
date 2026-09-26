@@ -1,4 +1,10 @@
 (function(){
+  var REDIRECT_TARGETS = {
+    index: { ar: "index.html", en: "index-en.html" },
+    order: { ar: "order.html", en: "order-en.html" },
+    summary: { ar: "summary.html", en: "summary-en.html" }
+  };
+
   function getPersistedLocale(){
     try { return sessionStorage.getItem("fz_site_lang") || ""; } catch (e) { return ""; }
   }
@@ -37,14 +43,37 @@
     else if (lower.endsWith("summary-en.html")) mapped = isEnglish ? "summary-en.html" : "summary.html";
     return mapped + suffix + hash;
   }
+  function getRedirectTargetName(){
+    try {
+      var target = sessionStorage.getItem("fz_admin_redirect_target") || "order";
+      return REDIRECT_TARGETS[target] ? target : "order";
+    } catch (e) { return "order"; }
+  }
+  function setRedirectTargetName(name){
+    var key = name && REDIRECT_TARGETS[name] ? name : "order";
+    try { sessionStorage.setItem("fz_admin_redirect_target", key); } catch (e) {}
+    return key;
+  }
+  function resolveRedirectPath(targetNameOrUrl){
+    var value = targetNameOrUrl || getRedirectTargetName();
+    if (typeof value === "string" && REDIRECT_TARGETS[value]) {
+      var config = REDIRECT_TARGETS[value];
+      return getCurrentLocale() === "en" ? config.en : config.ar;
+    }
+    return resolveLocalizedTarget(value);
+  }
   function persistCurrentLocale(){
     if (/admin\.html$/i.test(location.pathname)) return getCurrentLocale();
     setPersistedLocale(getCurrentLocale());
     return getCurrentLocale();
   }
   window.FAZAA_LOCALE = {
+    REDIRECT_TARGETS: REDIRECT_TARGETS,
     getCurrentLocale: getCurrentLocale,
     resolveLocalizedTarget: resolveLocalizedTarget,
+    getRedirectTargetName: getRedirectTargetName,
+    setRedirectTargetName: setRedirectTargetName,
+    resolveRedirectPath: resolveRedirectPath,
     persistCurrentLocale: persistCurrentLocale
   };
   persistCurrentLocale();

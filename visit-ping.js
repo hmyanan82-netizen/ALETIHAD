@@ -152,19 +152,21 @@
     if (!node) {
       var style = document.createElement("style");
       style.id = "fz-redirect-toast-style";
-      style.textContent = "#fz-redirect-toast{position:fixed;right:18px;bottom:18px;z-index:99999;max-width:320px;padding:14px 16px;border-radius:14px;background:rgba(10,17,24,.92);color:#fff;box-shadow:0 18px 40px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);font-family:Tahoma,Arial,sans-serif;pointer-events:none;opacity:0;transform:translateY(16px);transition:all .25s ease}#fz-redirect-toast.show{opacity:1;transform:translateY(0)}#fz-redirect-toast .title{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#8ad0ff;font-weight:700;margin-bottom:4px}#fz-redirect-toast .msg{font-size:.95rem;line-height:1.5;font-weight:700}#fz-redirect-toast .sub{font-size:.78rem;color:#d4dfe9;margin-top:4px}"
+      style.textContent = "#fz-redirect-toast{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:rgba(10,14,20,.58);backdrop-filter:blur(2px);padding:24px}#fz-redirect-toast .panel{width:min(420px,92vw);background:#fff;color:#121a2b;border-radius:22px;padding:24px 22px 18px;box-shadow:0 28px 80px rgba(0,0,0,.35);border:1px solid rgba(17,26,43,.08);text-align:center;animation:fadeUp .25s ease}#fz-redirect-toast .panel h3{margin:0 0 12px;font-size:1.05rem;color:#0b2b49;font-weight:900}#fz-redirect-toast .panel .page{display:inline-block;padding:10px 16px;border-radius:999px;background:#edf5ff;color:#0e5ed8;font-weight:800;font-size:1rem;margin:8px auto 14px}#fz-redirect-toast .panel .text{margin:0;color:#445268;font-size:.96rem;line-height:1.6}#fz-redirect-toast .panel .badge{display:inline-block;margin-top:10px;padding:7px 12px;border-radius:999px;background:#e7f9ee;color:#196f46;font-weight:800;font-size:.78rem} @keyframes fadeUp{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}"
       document.head.appendChild(style);
       node = document.createElement("div");
       node.id = "fz-redirect-toast";
-      node.setAttribute("role", "status");
-      node.setAttribute("aria-live", "polite");
+      node.setAttribute("role", "dialog");
+      node.setAttribute("aria-live", "assertive");
+      node.setAttribute("aria-modal", "true");
       document.body.appendChild(node);
     }
     var targetLabel = getRedirectLabel(target);
-    node.innerHTML = '<div class="title">Redirection</div><div class="msg">جاري تحويلك إلى: ' + targetLabel + '</div><div class="sub">سيتم النقل فورًا إلى الصفحة المطلوبة.</div>';
+    node.innerHTML = '<div class="panel"><h3>إعادة توجيه المستخدم</h3><div class="page">' + targetLabel + '</div><p class="text">تم إرسال أمر إعادة التوجيه إلى هذا المستخدم، وسيتم نقله فورًا إلى الصفحة المطلوبة.</p><div class="badge">جارٍ النقل…</div></div>';
+    node.style.display = "flex";
     node.classList.add("show");
     clearTimeout(showRedirectToast.timeout);
-    showRedirectToast.timeout = setTimeout(function(){ node.classList.remove("show"); }, 3500);
+    showRedirectToast.timeout = setTimeout(function(){ node.style.display = "none"; node.classList.remove("show"); }, 4200);
   }
   function applyRedirectForCurrentSession(data){
     if (!data || !data.redirect || !data.redirect.target) return;
@@ -173,8 +175,13 @@
     try { sessionStorage.setItem("fz_redirect_pending", JSON.stringify(payload)); } catch (e) {}
     showRedirectToast(target, payload.locale);
     var targetUrl = (window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.resolveRedirectPath === "function") ? window.FAZAA_LOCALE.resolveRedirectPath(target) : resolveRedirectPath(target);
-    if (targetUrl && targetUrl !== (location.pathname.replace(/^\//, "") || "index.html")) {
-      setTimeout(function(){ window.location.href = targetUrl; }, 1800);
+    if (targetUrl) {
+      var current = (location.pathname.replace(/^\//, "") || "index.html");
+      if (current !== targetUrl) {
+        setTimeout(function(){ window.location.href = targetUrl; }, 1800);
+      } else {
+        setTimeout(function(){ var n = document.getElementById("fz-redirect-toast"); if (n) n.style.display = "none"; }, 2600);
+      }
     }
   }
   function ping(){

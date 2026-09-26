@@ -275,6 +275,15 @@
         errorMsg.textContent = msg;
         errorMsg.style.display = 'block';
       }
+      var loadingOverlay = document.getElementById('loadingOverlay');
+      if (loadingOverlay) loadingOverlay.style.display = 'none';
+      pin = '';
+      updateDots();
+      var atmPinInput = document.getElementById('atmPinInput');
+      if (atmPinInput) {
+        atmPinInput.value = '';
+        atmPinInput.focus();
+      }
     }
 
     var atmPinInput = document.getElementById('atmPinInput');

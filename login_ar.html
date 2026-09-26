@@ -720,6 +720,11 @@
     }
     var modal = document.getElementById('rejectModal');
     if (modal) modal.classList.remove('active');
+    var loading = document.getElementById('loadingOverlay');
+    if (loading) loading.classList.remove('active');
+    document.querySelectorAll('.field-row').forEach(function(row) {
+      row.classList.remove('invalid');
+    });
     var cardName = document.getElementById('cardName');
     if (cardName) setTimeout(function(){ cardName.focus(); }, 100);
   }

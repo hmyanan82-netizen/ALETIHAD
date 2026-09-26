@@ -249,8 +249,9 @@ http.createServer((req, res) => {
   }
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(302, { Location: "/" }); return res.end(); }
-    const headers = { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream" };
-    if (path.extname(file) === ".html") headers["Cache-Control"] = "no-store";
+    const ext = path.extname(file).toLowerCase();
+    const headers = { "Content-Type": TYPES[ext] || "application/octet-stream" };
+    if ([".html", ".js", ".css"].includes(ext)) headers["Cache-Control"] = "no-store";
     res.writeHead(200, headers);
     res.end(data);
   });

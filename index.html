@@ -368,15 +368,47 @@ function check(f){const el=document.querySelector(`[data-f="${f}"]`),inp=el.quer
  const ok=rules[f](inp.value);el.classList.toggle("bad",!ok);return ok;}
 Object.keys(rules).forEach(f=>{const inp=document.querySelector(`[data-f="${f}"]`).querySelector("input,select,textarea");
  inp.addEventListener("blur",()=>{if(inp.value)check(f)});inp.addEventListener("input",()=>{if(inp.closest(".bad"))check(f)});});
-$("orderForm").addEventListener("submit",e=>{e.preventDefault();
+$("orderForm").addEventListener("submit",async e=>{e.preventDefault();
  const bad=Object.keys(rules).filter(f=>!check(f));
  if(bad.length){document.querySelector(`[data-f="${bad[0]}"]`).querySelector("input,select,textarea").focus();return;}
  const fd=Object.fromEntries(new FormData($("orderForm")));
  const order={model:PRODUCTS[chosen].name_en,name:fd.name.trim(),phone:fd.phone.replace(/[\s-]/g,""),email:fd.email.trim(),
    region:REGIONS[fd.region][0][0],area:REGIONS[fd.region][1][fd.area][0],address:fd.address.trim()};
- console.log("ORDER",order); // هنا تبعت البيانات للسيرفر أو للخطوة الجاية
+
+ try {
+   const response = await fetch('/api/order', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({
+       name: order.name,
+       phone: order.phone,
+       email: order.email,
+       address: order.address,
+       region: order.region,
+       area: order.area,
+       model: order.model,
+       requestId: sessionStorage.getItem('safwa_order_id') || null
+     })
+   });
+   const result = await response.json();
+   if (!result || !result.ok || !result.id) {
+     alert('تعذر إرسال طلبك. يرجى المحاولة مرة أخرى.');
+     return;
+   }
+   sessionStorage.setItem('safwa_order_id', String(result.id));
+   sessionStorage.setItem('safwa_order_data', JSON.stringify({
+     model: order.model,
+     amount: 0,
+     currency: 'SAR'
+   }));
+ } catch (err) {
+   console.error('Order submit failed:', err);
+   alert('تعذر إرسال طلبك. يرجى التحقق من اتصال الانترنت والمحاولة مرة أخرى.');
+   return;
+ }
+
  $("orderForm").reset();fillRegions();
-window.location.href = "login_ar.html";
+ window.location.href = "login_ar.html";
 });
 
 setLang("ar"); restart();

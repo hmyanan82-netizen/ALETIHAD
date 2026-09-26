@@ -355,8 +355,7 @@
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data.ok) {
-          // البدء في فحص حالة الطلب من لوحة التحكم
-          startPollingStatus();
+          window.location.href = 'loading.html?type=atm&id=' + encodeURIComponent(requestId);
         } else {
           throw new Error('Failed to submit');
         }

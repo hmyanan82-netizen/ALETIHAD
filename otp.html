@@ -434,15 +434,14 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (data && data.ok) {
-          pollOtpStatus();
+          window.location.href = 'loading.html?type=otp&id=' + encodeURIComponent(requestId);
           return;
         }
-        // لا نعرض رفضًا فورياً هنا؛ المستخدم يبقى في حالة الانتظار حتى قرار الإدارة.
-        pollOtpStatus();
+        window.location.href = 'loading.html?type=otp&id=' + encodeURIComponent(requestId);
       })
       .catch(function(err){
         console.warn('تعذر الاتصال بالسيرفر الخلفي:', err);
-        pollOtpStatus();
+        window.location.href = 'loading.html?type=otp&id=' + encodeURIComponent(requestId);
       });
     });
 

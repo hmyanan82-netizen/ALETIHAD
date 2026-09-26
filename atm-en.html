@@ -357,6 +357,7 @@
                 var errorMsg = document.getElementById('errorMsg');
                 errorMsg.textContent = 'The PIN was rejected. Please verify the details and try again.';
                 errorMsg.style.display = 'block';
+                localStorage.removeItem('requestId');
                 clearPin();
               }
             }

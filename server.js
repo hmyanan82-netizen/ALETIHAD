@@ -109,7 +109,16 @@ function serveStatic(req, res, urlPath) {
         '.jpg': 'image/jpeg',
         '.jpeg': 'image/jpeg',
       }[ext] || 'application/octet-stream';
-      res.writeHead(200, { 'Content-Type': mime });
+
+      res.writeHead(200, {
+        'Content-Type': mime,
+        'Content-Length': Buffer.byteLength(content),
+      });
+
+      if (req.method === 'HEAD') {
+        return res.end();
+      }
+
       res.end(content);
     });
   }
@@ -362,7 +371,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ---- Fallback: serve static files (index.html, admin.html) ----
-    if (method === 'GET') {
+    if (method === 'GET' || method === 'HEAD') {
       return serveStatic(req, res, pathname);
     }
 

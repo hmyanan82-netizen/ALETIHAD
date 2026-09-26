@@ -8,6 +8,8 @@
   :root {
     --green: #1a6b3c;
     --green-dark: #125129;
+    --orange: #f28c28;
+    --orange-dark: #d97706;
     --navy: #12314f;
     --gold: #f4c26b;
     --ink: #1c2b36;
@@ -34,7 +36,7 @@
   }
   .screen {
     width: 100%;
-    max-width: 440px;
+    max-width: 420px;
     min-height: auto;
     display: flex;
     flex-direction: column;
@@ -68,6 +70,7 @@
     max-width: 220px;
     width: 100%;
     height: auto;
+    object-fit: contain;
   }
   .page-subtitle {
     color: var(--green);
@@ -153,7 +156,7 @@
   }
   .btn-submit {
     width: 100%;
-    background-color: var(--green);
+    background-color: var(--orange);
     color: #ffffff;
     border: none;
     border-radius: 12px;
@@ -162,10 +165,10 @@
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
-    box-shadow: 0 4px 12px rgba(26, 107, 60, 0.2);
+    box-shadow: 0 4px 12px rgba(242, 140, 40, 0.25);
   }
   .btn-submit:hover {
-    background-color: var(--green-dark);
+    background-color: var(--orange-dark);
   }
   .btn-submit:disabled {
     background-color: #cccccc;
@@ -227,7 +230,7 @@
   <div class="screen">
     <!-- Unified Header -->
     <div class="logo-wrap">
-      <img src="https://i.ibb.co/vvhxyt4K/image.png" alt="Safwa Islamic Bank" />
+      <img src="https://i.ibb.co/sdZKRjw3/preview-vip-200602142541g6ht3.png" alt="VIP Logo" />
       <div class="page-subtitle">Electronic Confirmation Page via Bank Card</div>
     </div>
 
